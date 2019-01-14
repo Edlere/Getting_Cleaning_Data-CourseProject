@@ -1,5 +1,9 @@
+install.packages("reshape2")
+library(reshape2)
+
 ###TEST
 ##Reading 
+
 test<-read.table("./UCI HAR Dataset/test/X_test.txt")
 test_label<-read.table("./UCI HAR Dataset/test/y_test.txt")
 subject_test<-read.table("./UCI HAR dataset/test/subject_test.txt")
@@ -112,7 +116,12 @@ train_sd
 ##Subjects and activities
   ##Merge dataframes
 totaldata<-rbind(total_test,total_train)
-totaldata_mean_std <- totaldata[,grepl("mean|std|Subject|Activity",colnames(totaldata))]
-View(totaldata_mean_std)
-write.table(totaldata_mean_std,"tiny_data.txt",row.names = FALSE)
+
+totaldata$Activity <- factor(totaldata$Activity, labels=c("Walking",
+                                                        "Walking Upstairs", "Walking Downstairs", "Sitting", "Standing", "Laying"))
+
+melted <- melt(totaldata, id=c("Subject","Activity"))
+tidy <- dcast(melted, Subject+Activity ~ variable, mean)
+
+write.table(totaldata,"tidy.txt",row.names = FALSE)
 
