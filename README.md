@@ -1,3 +1,3 @@
 # Getting_Cleaning_Data-CourseProject
 
-#The script obtains the data from the text files and stores them in the respective dataframes for both the training data and the output data.
+The script obtains the training data and the test data, and stores it in dataframes to then name the respective activities, and also obtain the mean and the standard deviation for each of them. Then, as output, there is a dataframe total for all data, then these are stored in a file (tidy.txt)
