@@ -123,5 +123,5 @@ totaldata$Activity <- factor(totaldata$Activity, labels=c("Walking",
 melted <- melt(totaldata, id=c("Subject","Activity"))
 tidy <- dcast(melted, Subject+Activity ~ variable, mean)
 
-write.table(totaldata,"tidy.txt",row.names = FALSE)
+write.table(tidy,"tidy.txt",row.names = FALSE)
 
