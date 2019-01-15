@@ -1,127 +1,60 @@
-install.packages("reshape2")
-library(reshape2)
 
-###TEST
+library(reshape2)
+library(dplyr)
+
+
 ##Reading 
 
-test<-read.table("./UCI HAR Dataset/test/X_test.txt")
-test_label<-read.table("./UCI HAR Dataset/test/y_test.txt")
-subject_test<-read.table("./UCI HAR dataset/test/subject_test.txt")
+
+features <- read.table("UCI HAR Dataset/features.txt", col.names = c("n","functions"))
+activities <- read.table("UCI HAR Dataset/activity_labels.txt", col.names = c("code", "activity"))
+subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt", col.names = "subject")
+x_test <- read.table("UCI HAR Dataset/test/X_test.txt", col.names = features$functions)
+y_test <- read.table("UCI HAR Dataset/test/y_test.txt", col.names = "code")
+subject_train <- read.table("UCI HAR Dataset/train/subject_train.txt", col.names = "subject")
+x_train <- read.table("UCI HAR Dataset/train/X_train.txt", col.names = features$functions)
+y_train <- read.table("UCI HAR Dataset/train/y_train.txt", col.names = "code")
 
 
-## Names
-for (i in 1:2497) {
-  if (test_label[i,1]==1) {
-
- test_label[i,1]<- "WALKING"
-  }
-  if (test_label[i,1]==2) {
-    
-    test_label[i,1]<- "WALKING_UPSTAIRS"
-  }
-  if (test_label[i,1]==3) {
-  
-    test_label[i,1]<- "WALKING_DOWNSTAIRS"
-  }
-  if (test_label[i,1]==4) {
-
-    test_label[i,1]<- "SITTING"
-  }
-  if (test_label[i,1]==5) {
-   
-    test_label[i,1]<- "STANDING"
-  }
-  if (test_label[i,1]==6) {
-
-    test_label[i,1]<- "LAYING"
-  }
-}
-
-##Merge test dataframes 
-total_1<-cbind(test_label,test)
-
-colnames(total_1)[1]<-"Activity"
-
-total_test<-cbind(subject_test,total_1)
-colnames(total_test)[1]<-"Subject"
-View(total_test)
+##Merge
+X <- rbind(x_train, x_test)
+Y <- rbind(y_train, y_test)
+Subject <- rbind(subject_train, subject_test)
+Merged_Data <- cbind(Subject, Y, X)
 
 
-###TRAIN
-train<-read.table("./UCI HAR Dataset/train/X_train.txt")
-train_label<-read.table("./UCI HAR Dataset/train/y_train.txt")
-subject_train<-read.table("./UCI HAR Dataset/train/subject_train.txt")
+
+TidyData <- Merged_Data %>% select(subject, code, contains("mean"), contains("std"))
 
 
-for (i in 1:2497) {
-  if (train_label[i,1]==1) {
-    
-    train_label[i,1]<- "WALKING"
-  }
-  if (train_label[i,1]==2) {
-    
-    train_label[i,1]<- "WALKING_UPSTAIRS"
-  }
-  if (train_label[i,1]==3) {
-    
-    test_label[i,1]<- "WALKING_DOWNSTAIRS"
-  }
-  if (train_label[i,1]==4) {
-    
-    train_label[i,1]<- "SITTING"
-  }
-  if (train_label[i,1]==5) {
-    
-    train_label[i,1]<- "STANDING"
-  }
-  if (train_label[i,1]==6) {
-    
-    train_label[i,1]<- "LAYING"
-  }
-}
+##Names ---without a bucle {New}
+TidyData$code <- activities[TidyData$code, 2]
 
-##Merge train dataframes
+##Labels
 
-total_2<-cbind(train_label,train)
-colnames(total_2)[1]<- "Activity"
-total_train<-cbind(subject_train,total_2)
-colnames(total_train)[1]<-"Subject"
-#View(total_train)
-
-########Mean, standar deviation
-
-##Test
-test_mean<-c(2,3)   
-test_sd<-c(2,3)
-
-for (i in 1:561) {
-  test_mean[i] <- lapply(total_test[i], mean) ##Mean
-  test_sd[i]<-lapply(total_test[i],sd)         ##Standar deviation
-}
-test_mean
-test_sd
-
-##Train
-train_mean<-c(2,3)
-train_sd<-c(2,3)
-
-for (i in 1:561) {
- train_mean[i] <- lapply(total_train[i], mean) ##Mean
- train_sd[i]<-lapply(total_train[i],sd)         ##Standar deviation
-}
-class(train_mean)
-train_sd
+names(TidyData)[2] = "activity"
+names(TidyData)<-gsub("Acc", "Accelerometer", names(TidyData))
+names(TidyData)<-gsub("Gyro", "Gyroscope", names(TidyData))
+names(TidyData)<-gsub("BodyBody", "Body", names(TidyData))
+names(TidyData)<-gsub("Mag", "Magnitude", names(TidyData))
+names(TidyData)<-gsub("^t", "Time", names(TidyData))
+names(TidyData)<-gsub("^f", "Frequency", names(TidyData))
+names(TidyData)<-gsub("tBody", "TimeBody", names(TidyData))
+names(TidyData)<-gsub("-mean()", "Mean", names(TidyData), ignore.case = TRUE)
+names(TidyData)<-gsub("-std()", "STD", names(TidyData), ignore.case = TRUE)
+names(TidyData)<-gsub("-freq()", "Frequency", names(TidyData), ignore.case = TRUE)
+names(TidyData)<-gsub("angle", "Angle", names(TidyData))
+names(TidyData)<-gsub("gravity", "Gravity", names(TidyData))
 
 
-##Subjects and activities
-  ##Merge dataframes
-totaldata<-rbind(total_test,total_train)
 
-totaldata$Activity <- factor(totaldata$Activity, labels=c("Walking",
-                                                        "Walking Upstairs", "Walking Downstairs", "Sitting", "Standing", "Laying"))
+##Tidy data
 
-melted <- melt(totaldata, id=c("Subject","Activity"))
-tidy <- dcast(melted, Subject+Activity ~ variable, mean)
 
-write.table(tidy,"tidy.txt",row.names = FALSE)
+Final<- TidyData %>%
+  group_by(subject, activity) %>%
+  summarise_all(funs(mean))
+write.table(Final, "Tidy.txt", row.name=FALSE)
+
+
 
